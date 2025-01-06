@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import './App.css';
 import { useState, useEffect } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+import { CSSTransition } from 'react-transition-group';
 
 function App() {
   const [name, setName] = useState('');
@@ -14,74 +16,80 @@ function App() {
     | undefined
   >(undefined);
   const [age, setAge] = useState<number | undefined>(undefined);
+  const [resultName, setResultName] = useState<string | undefined>(undefined);
 
+  const [loading, setLoading] = useState(false);
   const [dataFetched, setDataFetched] = useState(false);
+
+  const notifyError = (message) => toast.error(message);
+
+  const resultRef = useRef(null);
 
   const onSubmit = () => {
     if (name === '') {
-      alert('Please enter a name');
+      notifyError('Please enter a name.');
     } else {
       setSubmittedName(name);
     }
   };
 
   useEffect(() => {
-    // If there's no submittedName, no need to run the API calls.
     if (!submittedName) return;
 
-    // We wrap our data fetching logic in an async function
     const fetchData = async () => {
       try {
-        await fetch(`http://localhost:3200/api/genderize/${submittedName}`)
-          .then((response) => response.json())
-          .then((data) => {
-            setGender({ gender: data.gender, probability: data.probability });
-          });
+        setLoading(true);
 
-        await fetch(`http://localhost:3200/api/agify/${submittedName}`)
-          .then((response) => response.json())
-          .then((data) => {
-            setAge(data.age);
-          });
+        const [genderRes, ageRes, nationalityRes] = await Promise.all([
+          fetch(`http://localhost:3200/api/genderize/${submittedName}`),
+          fetch(`http://localhost:3200/api/agify/${submittedName}`),
+          fetch(`http://localhost:3200/api/nationalize/${submittedName}`),
+        ]);
 
-        await fetch(`http://localhost:3200/api/nationalize/${submittedName}`)
-          .then((response) => response.json())
-          .then(async (data) => {
-            const countries = data.country || [];
+        const [genderData, ageData, nationalityData] = await Promise.all([
+          genderRes.json(),
+          ageRes.json(),
+          nationalityRes.json(),
+        ]);
 
-            const countryPromises = countries.map(async (item) => {
-              const country_id = item.country_id;
-              const probability = item.probability;
+        const countries = nationalityData.country || [];
+        const countryPromises = countries.map(async (item) => {
+          const country_id = item.country_id;
+          const probability = item.probability;
 
-              try {
-                const response = await fetch(
-                  `https://restcountries.com/v3.1/alpha/${country_id}`
-                );
-                const [countryInfo] = await response.json();
-                return {
-                  countryName: countryInfo.name.common,
-                  flag: countryInfo.flag,
-                  probability,
-                };
-              } catch (err) {
-                return {
-                  countryName: country_id,
-                  flag: undefined,
-                  probability,
-                };
-              }
-            });
+          try {
+            const response = await fetch(
+              `https://restcountries.com/v3.1/alpha/${country_id}`
+            );
+            const [countryInfo] = await response.json();
+            return {
+              countryName: countryInfo?.name?.common,
+              flag: countryInfo?.flag,
+              probability,
+            };
+          } catch (err) {
+            return {
+              countryName: country_id,
+              flag: undefined,
+              probability,
+            };
+          }
+        });
+        const resolvedCountries = await Promise.all(countryPromises);
 
-            const resolvedCountries = await Promise.all(countryPromises);
-
-            return resolvedCountries;
-          })
-          .then((countries) => {
-            setNationality(countries);
-          });
+        setGender({
+          gender: genderData?.gender,
+          probability: genderData?.probability,
+        });
+        setAge(ageData?.age);
+        setNationality(resolvedCountries);
+        setResultName(submittedName);
 
         setDataFetched(true);
+        setLoading(false);
       } catch (error) {
+        notifyError('Error fetching data');
+        setLoading(false);
         console.error('Error fetching data:', error);
       }
     };
@@ -90,29 +98,42 @@ function App() {
   }, [submittedName]);
 
   useEffect(() => {
-    if (gender && nationality && age) {
+    if (gender && nationality && age && !loading) {
       setDataFetched(true);
     }
-  }, [gender, nationality, age]);
+  }, [gender, nationality, age, loading]);
 
   return (
     <div className="App">
       <div className="App-header">
-        <InputPage setName={setName} onSubmit={onSubmit} />
-        {dataFetched && (
-          <ResultPage
-            submittedName={submittedName}
-            gender={gender}
-            nationality={nationality}
-            age={age}
-          />
-        )}
+        <ToastContainer
+          position="top-center"
+          autoClose={3000}
+          theme="colored"
+          className={'toast-container'}
+        />
+        <InputPage setName={setName} onSubmit={onSubmit} loading={loading} />
+        <CSSTransition
+          in={dataFetched}
+          classNames="fade"
+          unmountOnExit
+          nodeRef={resultRef}
+        >
+          <div ref={resultRef}>
+            <ResultPage
+              name={resultName}
+              gender={gender}
+              nationality={nationality}
+              age={age}
+            />
+          </div>
+        </CSSTransition>
       </div>
     </div>
   );
 }
 
-const InputPage = ({ setName, onSubmit }) => {
+const InputPage = ({ setName, onSubmit, loading }) => {
   return (
     <div className="Card">
       <div className="App-heading">Name Insight</div>
@@ -127,19 +148,23 @@ const InputPage = ({ setName, onSubmit }) => {
           }
         }}
       />
-      <button className="Submit-button" onClick={onSubmit}>
-        Submit
+      <button
+        className={`Submit-button ${loading ? 'loading' : ''}`}
+        onClick={onSubmit}
+        disabled={loading}
+      >
+        {loading ? 'Loading...' : 'Submit'}
       </button>
     </div>
   );
 };
 
-const ResultPage = ({ submittedName, gender, nationality, age }) => {
+const ResultPage = ({ name, gender, nationality, age }) => {
   return (
     <div className="Card">
       <div className="Card-Row">
         <div className="Card-Label">Name:</div>
-        <div className="Card-Value">{submittedName}</div>
+        <div className="Card-Value">{name}</div>
       </div>
 
       <div className="Card-Row">
