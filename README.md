@@ -2,6 +2,8 @@
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
+It communicates with a backend [https://github.com/Dacuna97/test-backend-app] on local port 3200.
+
 ## Available Scripts
 
 In the project directory, you can run:
