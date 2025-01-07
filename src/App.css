@@ -87,7 +87,7 @@
 }
 
 .Card {
-  width: 300px;
+  width: 350px !important;
   background-color: var(--cards-color);
   border-radius: 5px;
   padding: var(--space-3);
