@@ -184,31 +184,21 @@ const ResultPage = ({ name, gender, nationality, age }) => {
       </div>
 
       <div className="Card-Row">
-        <div
-          className="Card-Value"
-          style={{
-            padding: '10px',
-            width: '100%',
-            backgroundColor: '#cacaca68',
-            borderRadius: '5px',
-          }}
-        >
+        <div className="nationality-table-background">
           <table className="nationality-table">
             <thead>
               <tr>
-                <th style={{ textAlign: 'left', fontWeight: 'bold' }}>
-                  Nationality
-                </th>
-                <th style={{ textAlign: 'right' }}>Probability</th>
+                <th>Nationality</th>
+                <th className="text-right">Probability</th>
               </tr>
             </thead>
             <tbody>
               {nationality.map((national, index) => (
                 <tr key={index}>
-                  <td style={{ textAlign: 'left' }}>
+                  <td>
                     {national.countryName} {national.flag}
                   </td>
-                  <td style={{ textAlign: 'right' }}>
+                  <td className="text-right">
                     {(national.probability * 100).toFixed(2)}%
                   </td>
                 </tr>

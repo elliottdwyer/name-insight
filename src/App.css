@@ -1,3 +1,7 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --app-background-color:#e7e7e7;
   --text-color: #000000;
@@ -104,12 +108,19 @@
 
 .Card-Value {
   text-align: right;
+  width: 100%;
+}
+
+.nationality-table-background {
+  padding: 10px;
+  background-color: #cacaca68;
+  border-radius: 5px;
+  width: 100%;
+  text-align: left;
 }
 
 .nationality-table{
   width: 100%;
-  border-radius: 5px;
-  border-collapse: collapse;
 }
 
 .toast-container {
