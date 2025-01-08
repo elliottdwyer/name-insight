@@ -5,7 +5,7 @@
 :root {
   --app-background-color:#e7e7e7;
   --text-color: #000000;
-  --cards-color: #f5f5f5;
+  --cards-color: #ffffff;
   --item-color: #a4add6;
   --item-selected-color: #506283;
   --standout-color: #f53f23;
@@ -36,12 +36,13 @@
   font-size: 2rem;
   font-weight: bold;
   padding-bottom: var(--space-3);
+  font-family: 'Roboto' sans-serif;
 }
 
 .Input-bar {
   width: 200px;
   height: 36px;
-  border: 1px solid var(--button-color);
+  border: 2px solid var(--button-color);
   border-radius: 5px;
   padding: var(--space-1);
   font-size: 20px;
@@ -94,6 +95,11 @@
   font-family: 'PT Sans', sans-serif;
   font-size: 18px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: opacity 0.3s;
+}
+
+.Card.hide {
+  opacity: 0; 
 }
 
 .Card-Row {
@@ -127,19 +133,4 @@
   font-family: 'PT Sans', sans-serif;
   font-size: 16px;
   font-weight: bold;
-}
-
-.fade-enter {
-  opacity: 0;
-}
-.fade-enter.fade-enter-active {
-  opacity: 1;
-  transition: opacity 1200ms ease-in;
-}
-.fade-exit {
-  opacity: 1;
-}
-.fade-exit.fade-exit-active {
-  opacity: 0;
-  transition: opacity 1200ms ease-in;
 }

@@ -1,8 +1,7 @@
-import React, { useRef } from 'react';
+import React from 'react';
 import './App.css';
 import { useState, useEffect } from 'react';
 import { ToastContainer, toast } from 'react-toastify';
-import { CSSTransition } from 'react-transition-group';
 
 function App() {
   const [name, setName] = useState('');
@@ -13,8 +12,8 @@ function App() {
   >(undefined);
   const [nationality, setNationality] = useState<
     | { countryName: string; flag: string | undefined; probability: number }[]
-    | undefined
-  >(undefined);
+    | undefined[]
+  >(Array(5).fill(undefined));
   const [age, setAge] = useState<number | undefined>(undefined);
   const [resultName, setResultName] = useState<string | undefined>(undefined);
 
@@ -23,11 +22,14 @@ function App() {
 
   const notifyError = (message) => toast.error(message);
 
-  const resultRef = useRef(null);
-
   const onSubmit = () => {
+    // only allow letters and hyphens
+    const nameRegex = /^[a-zA-Z-]+$/;
+
     if (name === '') {
-      notifyError('Please enter a name.');
+      notifyError('Please enter a valid name.');
+    } else if (!nameRegex.test(name)) {
+      notifyError('Name must not contain numbers or special characters.');
     } else {
       setSubmittedName(name);
     }
@@ -52,6 +54,7 @@ function App() {
           nationalityRes.json(),
         ]);
 
+        // call to restcountries api to get country name and flag
         const countries = nationalityData.country || [];
         const countryPromises = countries.map(async (item) => {
           const country_id = item.country_id;
@@ -113,21 +116,13 @@ function App() {
           className={'toast-container'}
         />
         <InputPage setName={setName} onSubmit={onSubmit} loading={loading} />
-        <CSSTransition
-          in={dataFetched}
-          classNames="fade"
-          unmountOnExit
-          nodeRef={resultRef}
-        >
-          <div ref={resultRef}>
-            <ResultPage
-              name={resultName}
-              gender={gender}
-              nationality={nationality}
-              age={age}
-            />
-          </div>
-        </CSSTransition>
+        <ResultPage
+          name={resultName}
+          gender={gender}
+          nationality={nationality}
+          age={age}
+          hide={!dataFetched}
+        />
       </div>
     </div>
   );
@@ -159,9 +154,9 @@ const InputPage = ({ setName, onSubmit, loading }) => {
   );
 };
 
-const ResultPage = ({ name, gender, nationality, age }) => {
+const ResultPage = ({ name, gender, nationality, age, hide }) => {
   return (
-    <div className="Card">
+    <div className={`Card ${hide ? 'hide' : ''}`}>
       <div className="Card-Row">
         <div className="Card-Label">Name:</div>
         <div className="Card-Value">{name}</div>
@@ -170,11 +165,11 @@ const ResultPage = ({ name, gender, nationality, age }) => {
       <div className="Card-Row">
         <div className="Card-Label">Gender:</div>
         <div className="Card-Value">
-          {gender.gender
+          {gender?.gender
             ? gender.gender.charAt(0).toUpperCase() +
               gender.gender.slice(1).toLowerCase()
             : ''}
-          , {(gender.probability * 100).toFixed(2)}% certainty
+          , {(gender?.probability * 100).toFixed(2)}% certainty
         </div>
       </div>
 
@@ -193,13 +188,13 @@ const ResultPage = ({ name, gender, nationality, age }) => {
               </tr>
             </thead>
             <tbody>
-              {nationality.map((national, index) => (
+              {nationality?.map((national, index) => (
                 <tr key={index}>
                   <td>
-                    {national.countryName} {national.flag}
+                    {national?.countryName} {national?.flag}
                   </td>
                   <td className="text-right">
-                    {(national.probability * 100).toFixed(2)}%
+                    {(national?.probability * 100).toFixed(2)}%
                   </td>
                 </tr>
               ))}
